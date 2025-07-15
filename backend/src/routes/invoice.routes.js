@@ -1,12 +1,21 @@
 const router = require('express').Router();
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const auth = require('../middlewares/auth.middleware');
 
-router.post('/checkout', async (req, res) => {
+
+router.post('/checkout', auth, async (req, res) => {
   const { email, name, phone, date } = req.body;
 
-  const carts = await prisma.cart.findMany({ include: { product: true } });
-  if (carts.length === 0) return res.status(400).json({ error: "Cart is empty" });
+  // Ambil cart hanya milik user saat ini
+  const carts = await prisma.cart.findMany({
+    where: { userId: req.user.userId },
+    include: { product: true }
+  });
+
+  if (carts.length === 0) {
+    return res.status(400).json({ error: "Cart is empty" });
+  }
 
   const items = carts.map(c => `${c.product.name} x ${c.quantity}`).join(', ');
   const total = carts.reduce((sum, item) => sum + item.total, 0);
@@ -18,14 +27,18 @@ router.post('/checkout', async (req, res) => {
       phone,
       date: new Date(date),
       items,
-      total
+      total,
+      userId: req.user.userId
     }
   });
 
-  await prisma.cart.deleteMany();
+  // Hapus cart hanya milik user ini
+  await prisma.cart.deleteMany({
+    where: { userId: req.user.userId }
+  });
 
   res.status(201).json({
-    success: true, 
+    success: true,
     message: 'Checkout berhasil',
     data: invoice
   });

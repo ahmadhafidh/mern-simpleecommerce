@@ -4,6 +4,7 @@ const dotenv = require('dotenv');
 
 dotenv.config();
 const app = express();
+const path = require('path');
 
 app.use(cors());
 app.use(express.json());
@@ -19,6 +20,9 @@ app.use('/api/statistics', require('./routes/statistics.routes'));
 app.get('/', (req, res) => {
   res.send("Tokoonline API is running...");
 });
+
+// Serve static files from /uploads
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
