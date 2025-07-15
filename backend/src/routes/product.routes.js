@@ -6,6 +6,8 @@ const upload = require('../utils/upload');
 
 const fs = require('fs');
 const path = require('path');
+require('dotenv').config();
+const BASE_URL = process.env.BASE_URL || 'http://localhost:5025';
 
 // Public
 router.get('/', async (req, res) => {
@@ -30,7 +32,6 @@ router.get('/:id', async (req, res) => {
 // Admin
 router.use(auth);
 
-// 🔻 POST Product with Image Upload
 router.post('/', upload.single('image'), async (req, res) => {
   const { name, price, description, stock, inventoryId } = req.body;
   const image = req.file ? `/uploads/${req.file.filename}` : null;
@@ -52,14 +53,16 @@ router.post('/', upload.single('image'), async (req, res) => {
       },
     });
 
-    res.status(201).json(product);
+    res.status(201).json({
+      ...product,
+      image: product.image ? `${BASE_URL}${product.image}` : null,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Gagal membuat produk' });
   }
 });
 
-// 🔻 PUT Product with optional image update
 router.put('/:id', upload.single('image'), async (req, res) => {
   const { id } = req.params;
   const { name, price, description, stock, inventoryId } = req.body;
@@ -71,6 +74,23 @@ router.put('/:id', upload.single('image'), async (req, res) => {
       return res.status(404).json({ message: 'Inventory ID tidak ditemukan' });
     }
 
+    // 🔍 Ambil produk lama untuk hapus image jika perlu
+    const existingProduct = await prisma.product.findUnique({ where: { id } });
+
+    if (!existingProduct) {
+      return res.status(404).json({ message: 'Produk tidak ditemukan' });
+    }
+
+    // 🗑️ Hapus gambar lama jika upload gambar baru
+    if (image && existingProduct.image) {
+      const oldImagePath = path.join(__dirname, '..', '..', 'uploads', path.basename(existingProduct.image));
+      fs.unlink(oldImagePath, (err) => {
+        if (err) console.warn('Gagal hapus gambar lama:', oldImagePath);
+        else console.log('Gambar lama terhapus:', oldImagePath);
+      });
+    }
+
+    // 🔄 Siapkan data update
     const updateData = {
       name,
       price: parseInt(price),
@@ -81,12 +101,15 @@ router.put('/:id', upload.single('image'), async (req, res) => {
 
     if (image) updateData.image = image;
 
-    const product = await prisma.product.update({
+    const updatedProduct = await prisma.product.update({
       where: { id },
       data: updateData,
     });
 
-    res.json(product);
+    res.json({
+      ...updatedProduct,
+      image: updatedProduct.image ? `${BASE_URL}${updatedProduct.image}` : null,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Gagal update produk' });
