@@ -20,7 +20,7 @@ router.put('/:id', async (req, res) => {
   const { id } = req.params;
   const { name, description } = req.body;
   const item = await prisma.inventory.update({
-    where: { id: +id },
+    where: { id: id },
     data: { name, description }
   });
   res.json(item);
@@ -28,7 +28,7 @@ router.put('/:id', async (req, res) => {
 
 router.delete('/:id', async (req, res) => {
   const { id } = req.params;
-  await prisma.inventory.delete({ where: { id: +id } });
+  await prisma.inventory.delete({ where: { id: id } });
   res.json({ message: 'Inventory deleted' });
 });
 

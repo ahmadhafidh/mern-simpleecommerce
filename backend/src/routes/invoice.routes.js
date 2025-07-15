@@ -46,7 +46,7 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const invoice = await prisma.invoice.findUnique({
-      where: { id: +req.params.id }
+      where: { id: req.params.id }
     });
 
     if (!invoice) {
@@ -58,25 +58,6 @@ router.get('/:id', async (req, res) => {
     res.status(500).json({ error: 'Gagal mengambil invoice berdasarkan ID' });
   }
 });
-
-// ✅ Get invoice by invoiceNumber (UUID)
-router.get('/uuid/:invoiceNumber', async (req, res) => {
-  try {
-    const invoice = await prisma.invoice.findUnique({
-      where: { invoiceNumber: req.params.invoiceNumber }
-    });
-
-    if (!invoice) {
-      return res.status(404).json({ message: 'Invoice tidak ditemukan' });
-    }
-
-    res.json(invoice);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Gagal mengambil invoice berdasarkan invoiceNumber' });
-  }
-});
-
 
 // ✅ Get invoice by user email
 router.get('/user/:email', async (req, res) => {

@@ -12,14 +12,14 @@ router.get('/', async (req, res) => {
 router.get('/inventory/:id', async (req, res) => {
   const { id } = req.params;
   const products = await prisma.product.findMany({
-    where: { inventoryId: +id }
+    where: { inventoryId: id }
   });
   res.json(products);
 });
 
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
-  const product = await prisma.product.findUnique({ where: { id: +id } });
+  const product = await prisma.product.findUnique({ where: { id: id } });
   res.json(product);
 });
 
@@ -76,7 +76,7 @@ router.put('/:id', async (req, res) => {
 
     // ✅ Update produk hanya jika inventory valid
     const product = await prisma.product.update({
-      where: { id: +id },
+      where: { id: id },
       data: {
         name,
         image,
@@ -96,7 +96,7 @@ router.put('/:id', async (req, res) => {
 
 router.delete('/:id', async (req, res) => {
   const { id } = req.params;
-  await prisma.product.delete({ where: { id: +id } });
+  await prisma.product.delete({ where: { id: id } });
   res.json({ message: 'Product deleted' });
 });
 
