@@ -5,6 +5,7 @@ const dotenv = require('dotenv');
 dotenv.config();
 const app = express();
 const path = require('path');
+const fs = require('fs');
 
 app.use(cors());
 app.use(express.json());
@@ -21,7 +22,21 @@ app.get('/', (req, res) => {
   res.send("Tokoonline API is running...");
 });
 
-// Serve static files from /uploads
+// check if there is any image
+app.use('/uploads', (req, res, next) => {
+  const filePath = path.join(__dirname, '..', 'uploads', req.path);
+
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({
+      success: false,
+      message: `Image not found: ${req.path}`
+    });
+  }
+
+  next();
+});
+
+// Serve static file upload
 app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 const PORT = process.env.PORT || 3000;

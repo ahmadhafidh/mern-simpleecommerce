@@ -3,9 +3,11 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const auth = require('../middlewares/auth.middleware');
 
+const { successResponse, errorResponse } = require('../utils/response'); //response standard
+
 router.use(auth);
 
-// Statistik berdasarkan rentang tanggal
+// Statistik with rangedate
 router.get('/range', async (req, res) => {
   const { start, end } = req.query;
 
@@ -21,10 +23,11 @@ router.get('/range', async (req, res) => {
   const totalPesanan = data.reduce((sum, inv) => sum + 1, 0);
   const totalTerbayar = data.reduce((sum, inv) => sum + inv.total, 0);
 
-  res.json({ totalPesanan, totalTerbayar });
+  return successResponse(res, 'Statistik with rangedate successful', { totalPesanan, totalTerbayar });
+
 });
 
-// Statistik satu tanggal
+// Statistik single
 router.get('/single', async (req, res) => {
   const { date } = req.query;
 
@@ -44,7 +47,8 @@ router.get('/single', async (req, res) => {
   const totalPesanan = data.length;
   const totalTerbayar = data.reduce((sum, inv) => sum + inv.total, 0);
 
-  res.json({ totalPesanan, totalTerbayar });
+  return successResponse(res, 'Statistik with singedate successful', { totalPesanan, totalTerbayar });
+
 });
 
 module.exports = router;

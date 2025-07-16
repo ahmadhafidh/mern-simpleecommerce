@@ -4,17 +4,35 @@ const jwt = require('jsonwebtoken');
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
+const { successResponse, errorResponse } = require('../utils/response'); //response standard
+const cookieOptions = require('../utils/cookieOptions'); //cookies use for login and logout
+
 router.post('/register', async (req, res) => {
   const { email, password } = req.body;
-  const hashed = await bcrypt.hash(password, 10);
 
   try {
+    // 1️⃣ check existed email
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+
+    if (existingUser) {
+      return errorResponse(res, 'Email is already in use', null, 400);
+    }
+
+    // 2️⃣ Hash password & create user
+    const hashed = await bcrypt.hash(password, 10);
+
     const user = await prisma.user.create({
       data: { email, password: hashed }
     });
-    res.json(user);
+
+    // 3️⃣ send response success
+    return successResponse(res, 'Register successful', {
+        id: user.id,
+        email: user.email
+    });
+
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    return errorResponse(res, 'Register failed', { error: err.message }, 500);
   }
 });
 
@@ -23,16 +41,22 @@ router.post('/login', async (req, res) => {
   const user = await prisma.user.findUnique({ where: { email } });
 
   if (!user || !await bcrypt.compare(password, user.password)) {
-    return res.status(401).json({ error: 'Invalid credentials' });
+    return errorResponse(res, 'Invalid credentials', null, 401);
   }
 
-  const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET);
-  res.json({ token });
+  const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '1d' });
+
+  res.cookie('token', token, cookieOptions(req)); // save token in cookie
+  return successResponse(res, 'Login successful', { userId: user.id, email: email, token: token });
 });
 
 router.post('/logout', (req, res) => {
-  // Logout is handled client-side by deleting the token
-  res.json({ message: 'Logged out (client deletes token)' });
+  res.clearCookie('token', {
+    ...cookieOptions(req),
+    maxAge: undefined // override maxAge biar cookie benar-benar terhapus
+  });
+
+  return successResponse(res, 'Logout successful');
 });
 
 module.exports = router;

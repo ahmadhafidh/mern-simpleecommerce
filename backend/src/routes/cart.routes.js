@@ -2,6 +2,7 @@ const router = require('express').Router();
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const auth = require('../middlewares/auth.middleware');
+const { successResponse, errorResponse } = require('../utils/response'); //response standard
 
 // Add to cart (POST)
 router.post('/', auth, async (req, res) => {
@@ -12,7 +13,7 @@ router.post('/', auth, async (req, res) => {
   });
 
   if (!product)
-    return res.status(404).json({ error: 'Product not found' });
+    return errorResponse(res, 'Product not found', { error: 'Product not found' }, 404);
 
   const total = product.price * quantity;
 
@@ -25,7 +26,8 @@ router.post('/', auth, async (req, res) => {
     }
   });
 
-  res.json(cart);
+  return successResponse(res, 'Add to cart successful', cart);
+
 });
 
 // Get all cart (for current user)
@@ -34,8 +36,9 @@ router.get('/', auth, async (req, res) => {
     where: { userId: req.user.userId },
     include: { product: true }
   });
+  
+  return successResponse(res, 'get all cart successful', cartItems );
 
-  res.json(cartItems);
 });
 
 module.exports = router;

@@ -2,12 +2,12 @@ const router = require('express').Router();
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const auth = require('../middlewares/auth.middleware');
-
+const { successResponse, errorResponse } = require('../utils/response'); //response standard
 
 router.post('/checkout', auth, async (req, res) => {
   const { email, name, phone, date } = req.body;
 
-  // Ambil cart hanya milik user saat ini
+  // get cart current user logged in
   const carts = await prisma.cart.findMany({
     where: { userId: req.user.userId },
     include: { product: true }
@@ -37,25 +37,22 @@ router.post('/checkout', auth, async (req, res) => {
     where: { userId: req.user.userId }
   });
 
-  res.status(201).json({
-    success: true,
-    message: 'Checkout berhasil',
-    data: invoice
-  });
+  return successResponse(res, 'Checkout Successful', invoice);
+
 });
 
-// ✅ Get all invoices
+// Get all invoices
 router.get('/', async (req, res) => {
   try {
     const data = await prisma.invoice.findMany();
-    res.json(data);
+    return successResponse(res, 'Get all invoices', data );
   } catch (err) {
-    res.status(500).json({ error: 'Gagal mengambil invoice' });
+    return errorResponse(res, 'Failed get Invoice');
   }
 });
 
 
-// ✅ Get invoice by ID
+// Get invoice by ID
 router.get('/:id', async (req, res) => {
   try {
     const invoice = await prisma.invoice.findUnique({
@@ -63,25 +60,28 @@ router.get('/:id', async (req, res) => {
     });
 
     if (!invoice) {
-      return res.status(404).json({ message: 'Invoice tidak ditemukan' });
+      return errorResponse(res, 'Invoice not found');
+
     }
 
-    res.json(invoice);
+    return successResponse(res, 'Get invoice by ID successful', invoice );
+
   } catch (err) {
-    res.status(500).json({ error: 'Gagal mengambil invoice berdasarkan ID' });
+    return errorResponse(res, 'get invoice by id fail', { error: err.message }, 500);
   }
 });
 
-// ✅ Get invoice by user email
+// Get invoice by user email
 router.get('/user/:email', async (req, res) => {
   try {
     const invoices = await prisma.invoice.findMany({
       where: { email: req.params.email }
     });
 
-    res.json(invoices);
+    return successResponse(res, 'Get invoice by ID successful', invoices);
+
   } catch (err) {
-    res.status(500).json({ error: 'Gagal mengambil invoice berdasarkan email' });
+    return errorResponse(res, 'get invoice by email fail', { error: err.message }, 500);
   }
 });
 
