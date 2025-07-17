@@ -1,5 +1,5 @@
 ## 📦 Live Code & Dokumentasi
 
-- 🔌 **Backend Live Code**: [Click here](https://github.com/your-username/backend-repo)
-- 💻 **Frontend Live Code**: [Click here](https://github.com/your-username/frontend-repo)
-- 📬 **Postman Docs (API)**: [Click here](https://www.postman.com/your-workspace/documentation/your-doc-id)
+- 🔌 **Backend Live Code**: [Click here](https://api-mern-simpleecommerce.idkoding.com/)
+- 💻 **Frontend Live Code**: [Click here](https://mern-simpleecommerce.idkoding.com/)
+- 📬 **Postman Docs (API)**: [Click here](https://documenter.getpostman.com/view/26950655/2sB34ikKgs)
